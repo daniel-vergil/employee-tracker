@@ -9,10 +9,10 @@ VALUES
 INSERT INTO employee_db.role
     (title, salary, department_id)
 VALUES
-    ("Engineer", 85000, 2), 
+    ("Engineer", 85000, 1), 
     ("Senior Engineer", 125000, 2), 
-    ("CFO", 350000, 4), 
-    ("Chief Counsel", 300000, 5);
+    ("CFO", 350000, 3), 
+    ("Chief Counsel", 300000, 4);
 
 INSERT INTO employee
     (first_name, last_name, role_id, manager_id)
