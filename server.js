@@ -1,12 +1,14 @@
 // const connection = require('./config/connection');
 const inquirer = require('inquirer');
-const path = require('path');
-const consoleTable = require('console.table');
 const queries = require('./lib/queries');
 const db = require('./config/connection');
+
 const {
     response
 } = require('express');
+const {
+    exec
+} = require('child_process');
 var sql = "";
 // Create an array of questions for user input
 const questions = [
@@ -20,6 +22,9 @@ const questions = [
     "Select employee's role:",
     "Select employee's manager:",
     "Which employee role do you want to update?",
+    "Which employee's manager do you want to update?",
+    "Select a department:",
+    "Select an employee:"
 ];
 
 
@@ -155,6 +160,232 @@ const addEmployee = () => {
         })
 }
 
+function updateEmployeeRole() {
+    var employeeList = [];
+    var employeeData = [];
+    const sql = `SELECT * FROM employee_db.employee;`;
+    db.promise().query(sql)
+        .then(response => {
+            if (response[0].length > 0) {
+                employeeData.push(response[0]);
+                response[0].forEach(employee => {
+                    employeeList.push(`${employee.first_name} ${employee.last_name}`);
+                });
+                const roleQuery = `SELECT distinct(title),id FROM employee_db.role;`;
+                var roleList = [];
+                var roleNameList = [];
+                db.promise().query(roleQuery)
+                    .then(response => {
+                        if (response[0].length <= 0) {
+                            console.log("Please add a role to add an employee");
+                        } else {
+                            roleList.push(response[0]);
+                            response[0].forEach(role => {
+                                roleNameList.push(role.title);
+                            });
+                        }
+                    })
+                inquirer
+                    .prompt([{
+                            type: "list",
+                            message: questions[11],
+                            name: "employeeName",
+                            choices: employeeList
+                        },
+                        {
+                            type: "list",
+                            message: questions[7],
+                            name: "employeeRole",
+                            choices: roleNameList
+                        }
+                    ]).then(response => {
+                        var employeeId;
+                        var roleId;
+                        for (var i = 0; i < employeeData[0].length; i++) {
+                            if (((response.employeeName).includes(employeeData[0][i].first_name)) && ((response.employeeName).includes(employeeData[0][i].last_name))) {
+                                employeeId = employeeData[0][i].id;
+                            };
+                        }
+                        for (var i = 0; i < roleList[0].length; i++) {
+                            if (roleList[0][i].title == response.employeeRole) {
+                                roleId = roleList[0][i].id;
+                            };
+                        }
+                        const sql = `UPDATE employee_db.employee SET role_id = ${roleId} WHERE id = ${employeeId}`
+                        queries(sql, "Employee");
+                    })
+            } else {
+                console.log("Please add an employee to the database!");
+            }
+        })
+
+}
+
+function updateEmployeeManager() {
+    var employeeList = [];
+    var employeeData = [];
+    const sql = `SELECT * FROM employee_db.employee;`;
+    db.promise().query(sql)
+        .then(response => {
+            if (response[0].length > 0) {
+                employeeData.push(response[0]);
+                response[0].forEach(employee => {
+                    employeeList.push(`${employee.first_name} ${employee.last_name}`);
+                });
+                inquirer
+                    .prompt([{
+                            type: "list",
+                            message: questions[10],
+                            name: "employeeName",
+                            choices: employeeList
+                        },
+                        {
+                            type: "list",
+                            message: questions[8],
+                            name: "manager",
+                            choices: employeeList
+                        }
+                    ]).then(response => {
+                        var employeeId;
+                        var managerId;
+                        for (var i = 0; i < employeeData[0].length; i++) {
+                            if (((response.employeeName).includes(employeeData[0][i].first_name)) && ((response.employeeName).includes(employeeData[0][i].last_name))) {
+                                employeeId = employeeData[0][i].id;
+                            };
+                        }
+                        for (var i = 0; i < employeeData[0].length; i++) {
+                            if (((response.manager).includes(employeeData[0][i].first_name)) && ((response.manager).includes(employeeData[0][i].last_name))) {
+                                managerId = employeeData[0][i].id;
+                            };
+                        }
+                        const sql = `UPDATE employee_db.employee SET manager_id = ${managerId} WHERE id = ${employeeId}`
+                        queries(sql, "Employee");
+                    })
+            } else {
+                console.log("Please add an employee to the database!");
+            }
+        })
+
+}
+
+function deleteDepartment() {
+    var deptList = [];
+    var deptData = [];
+    const sql = `SELECT * FROM employee_db.department;`;
+    db.promise().query(sql)
+        .then(response => {
+            if (response[0].length > 0) {
+                deptData.push(response[0]);
+                response[0].forEach(department => {
+                    deptList.push(department.name);
+                });
+                inquirer
+                    .prompt([{
+                        type: "list",
+                        message: questions[11],
+                        name: "departmentName",
+                        choices: deptList
+                    }]).then(response => {
+                        var deptId;
+                        for (var i = 0; i < deptData[0].length; i++) {
+                            if (response.departmentName == deptData[0][i].name) {
+                                deptId = deptData[0][i].id;
+                            };
+                        }
+                        const sql = `DELETE FROM employee_db.department WHERE id = ${deptId}`
+                        queries(sql, "Department");
+                    })
+            } else {
+                console.log("Please add a department to the database!");
+            }
+        })
+}
+
+function deleteRole() {
+    var roleList = [];
+    var roleData = [];
+    const sql = `SELECT * FROM employee_db.role;`;
+    db.promise().query(sql)
+        .then(response => {
+            if (response[0].length > 0) {
+                roleData.push(response[0]);
+                response[0].forEach(role => {
+                    roleList.push(role.title);
+                });
+                inquirer
+                    .prompt([{
+                        type: "list",
+                        message: questions[11],
+                        name: "roleName",
+                        choices: roleList
+                    }]).then(response => {
+                        var roleId;
+                        for (var i = 0; i < roleData[0].length; i++) {
+                            if (response.roleName == roleData[0][i].title) {
+                                roleId = roleData[0][i].id;
+                            };
+                        }
+                        const sql = `DELETE FROM employee_db.role WHERE id = ${roleId}`
+                        queries(sql, "Role");
+                    })
+            } else {
+                console.log("Please add a role to the database!");
+            }
+        })
+}
+
+function deleteEmployee() {
+    var employeeList = [];
+    var employeeData = [];
+    const sql = `SELECT * FROM employee_db.employee;`;
+    db.promise().query(sql)
+        .then(response => {
+            if (response[0].length > 0) {
+                employeeData.push(response[0]);
+                response[0].forEach(employee => {
+                    employeeList.push(`${employee.first_name} ${employee.last_name}`);
+                });
+                inquirer
+                    .prompt([{
+                        type: "list",
+                        message: questions[12],
+                        name: "employeeName",
+                        choices: employeeList
+                    }]).then(response => {
+                        var employeeId;
+                        for (var i = 0; i < employeeData[0].length; i++) {
+                            if (((response.employeeName).includes(employeeData[0][i].first_name)) && ((response.employeeName).includes(employeeData[0][i].last_name))) {
+                                employeeId = employeeData[0][i].id;
+                            };
+                        }
+                        const sql = `DELETE FROM employee_db.employee WHERE id = ${employeeId}`
+                        queries(sql, "Employee");
+                    })
+            } else {
+                console.log("Please add a role to the database!");
+            }
+        })
+}
+
+function totalBudget() {
+    var salaryList = [0];
+    const sql = `SELECT salary FROM employee_db.role;`;
+    db.promise().query(sql)
+        .then(response => {
+            response[0].forEach(salary => {
+                salaryList.push(parseFloat(salary.salary));
+            });
+            var sum = 0;
+            for (i = 0; i < salaryList.length; i++) {
+                sum += salaryList[i];
+            }
+            console.log(`$${sum}`);
+        })
+}
+
+function exit() {
+   
+}
 
 function init() {
     inquirer
@@ -171,10 +402,7 @@ function init() {
                 "Add Employee",
                 "Update Employee Role",
                 "Update Employee Managers",
-                "View Employees by Manager",
-                "View Employees by Department",
                 "Delete a Department",
-                "Delete a Role",
                 "Delete an Employee",
                 "View the Total Utilized Budget of a Department"
             ]
@@ -185,11 +413,15 @@ function init() {
                     queries(sql);
                     break;
                 case "View All Roles":
-                    sql = `SELECT * FROM employee_db.role`;
+                    sql = `SELECT employee_db.role.id, employee_db.role.title, employee_db.role.salary, employee_db.department.name AS department
+                    FROM  employee_db.role
+                    INNER JOIN employee_db.department ON employee_db.role.department_id=employee_db.department.id;`;
                     queries(sql);
                     break;
                 case "View All Employees":
-                    sql = `SELECT * FROM employee_db.employee`;
+                    sql = `SELECT employee_db.employee.id, employee_db.employee.first_name, employee_db.employee.last_name, employee_db.role.title AS role
+                    FROM  employee_db.employee
+                    INNER JOIN employee_db.role ON employee_db.employee.role_id=employee_db.role.id;`;
                     queries(sql);
                     break;
                 case "Add Department":
@@ -202,28 +434,19 @@ function init() {
                     addEmployee();
                     break;
                 case "Update Employee Role":
-                    sql = `SELECT * FROM employee_db.department`;
+                    updateEmployeeRole();
                     break;
                 case "Update Employee Managers":
-                    sql = `SELECT * FROM employee_db.department`;
-                    break;
-                case "View Employees by Manager":
-                    sql = `SELECT * FROM employee_db.department`;
-                    break;
-                case "View Employees by Department":
-                    sql = `SELECT * FROM employee_db.department`;
+                    updateEmployeeManager();
                     break;
                 case "Delete a Department":
-                    sql = `SELECT * FROM employee_db.department`;
-                    break;
-                case "Delete a Role":
-                    sql = `SELECT * FROM employee_db.department`;
+                    deleteDepartment();
                     break;
                 case "Delete an Employee":
-                    sql = `SELECT * FROM employee_db.department`;
+                    deleteEmployee();
                     break;
                 case "View the Total Utilized Budget of a Department":
-                    sql = `SELECT * FROM employee_db.department`;
+                    totalBudget();
                     break;
             }
         })
