@@ -26,6 +26,13 @@
 ## Usage
 <p>1. Open terminal<br>2. cd to the project root directory<br>3. Run the command 'node index.js'<br>4. Select from the choices from the menu to update or view from the database</p>
 
+## Screenshots
+<img width="996" alt="employee-tracker-main-menu" src="https://user-images.githubusercontent.com/55717787/159140659-b9f2b1cb-cea6-48a1-bf81-89e61c8ada75.png">
+<img width="1189" alt="employee-tracker-view-data" src="https://user-images.githubusercontent.com/55717787/159140660-51dcf91d-a049-490e-bf9c-ae3de652a184.png">
+
+## Walk Through Video
+- [Walk Through Video](https://1drv.ms/v/s!AuncG59SV-FRgxh-TAsCIWICnLiU)
+
 ## Credits
 <p>https://www.npmjs.com/package/mysql2</p>
 
